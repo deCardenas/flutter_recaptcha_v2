@@ -11,33 +11,31 @@ class RecaptchaV2 extends StatefulWidget {
   final String apiKey;
   final String apiSecret;
   final String pluginURL;
-  final RecaptchaV2Controller controller;
-  bool visibleCancelBottom;
-  String textCancelButtom;
+  final RecaptchaV2Controller? controller;
+  final bool visibleCancelBottom;
+  final String textCancelButtom;
 
-  final ValueChanged<bool> onVerifiedSuccessfully;
-  final ValueChanged<String> onVerifiedError;
+  final ValueChanged<bool>? onVerifiedSuccessfully;
+  final ValueChanged<String>? onVerifiedError;
 
   RecaptchaV2({
-    this.apiKey,
-    this.apiSecret,
+    required this.apiKey,
+    required this.apiSecret,
     this.pluginURL: "https://recaptcha-flutter-plugin.firebaseapp.com/",
     this.visibleCancelBottom: false,
     this.textCancelButtom: "CANCEL CAPTCHA",
-    RecaptchaV2Controller controller,
+    this.controller,
     this.onVerifiedSuccessfully,
     this.onVerifiedError,
-  })  : controller = controller ?? RecaptchaV2Controller(),
-        assert(apiKey != null, "Google ReCaptcha API KEY is missing."),
-        assert(apiSecret != null, "Google ReCaptcha API SECRET is missing.");
+  });
 
   @override
   State<StatefulWidget> createState() => _RecaptchaV2State();
 }
 
 class _RecaptchaV2State extends State<RecaptchaV2> {
-  RecaptchaV2Controller controller;
-  WebViewController webViewController;
+  late RecaptchaV2Controller controller;
+  WebViewController? webViewController;
 
   void verifyToken(String token) async {
     String url = "https://www.google.com/recaptcha/api/siteverify";
@@ -49,10 +47,13 @@ class _RecaptchaV2State extends State<RecaptchaV2> {
     if (response.statusCode == 200) {
       dynamic json = jsonDecode(response.body);
       if (json['success']) {
-        widget.onVerifiedSuccessfully(true);
+        if (widget.onVerifiedSuccessfully != null)
+          widget.onVerifiedSuccessfully!(true);
       } else {
-        widget.onVerifiedSuccessfully(false);
-        widget.onVerifiedError(json['error-codes'].toString());
+        if (widget.onVerifiedSuccessfully != null)
+          widget.onVerifiedSuccessfully!(false);
+        if (widget.onVerifiedSuccessfully != null)
+          widget.onVerifiedError!(json['error-codes'].toString());
       }
     }
 
@@ -62,10 +63,8 @@ class _RecaptchaV2State extends State<RecaptchaV2> {
 
   void onListen() {
     if (controller.visible) {
-      if (webViewController != null) {
-        webViewController.clearCache();
-        webViewController.reload();
-      }
+      webViewController?.clearCache();
+      webViewController?.reload();
     }
     setState(() {
       controller.visible;
@@ -74,7 +73,7 @@ class _RecaptchaV2State extends State<RecaptchaV2> {
 
   @override
   void initState() {
-    controller = widget.controller;
+    controller = widget.controller ?? RecaptchaV2Controller();
     controller.addListener(onListen);
     super.initState();
   }
@@ -82,8 +81,8 @@ class _RecaptchaV2State extends State<RecaptchaV2> {
   @override
   void didUpdateWidget(RecaptchaV2 oldWidget) {
     if (widget.controller != oldWidget.controller) {
-      oldWidget.controller.removeListener(onListen);
-      controller = widget.controller;
+      oldWidget.controller?.removeListener(onListen);
+      controller = widget.controller!;
       controller.removeListener(onListen);
     }
     super.didUpdateWidget(oldWidget);
